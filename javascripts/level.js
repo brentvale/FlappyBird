@@ -1,4 +1,4 @@
-var PIPE_MOVEMENT = 20;
+var PIPE_MOVEMENT = 2;
 var PIPE_COLOR = "green";
 var BACKGROUND_COLOR = "#87CEFF";
 var HOLE_HEIGHT = 180;
@@ -10,14 +10,15 @@ var CANVAS_WIDTH = 900;
 function Level(context) {
   this.pipes = [{x:600, gap:100}, {x:900, gap:150}, {x:1200, gap:190}];
   this.score = 0;
+  this.particles = [];
 }
 
 Level.prototype = {
   drawBackground: function(context) {
-    context.fillStyle = BACKGROUND_COLOR;
+    // context.fillStyle = BACKGROUND_COLOR;
     context.beginPath();
     context.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    context.fill();
+    // context.fill();
   },
   drawPipes: function(context){
     for(var i = 0; i < 3; i++){
@@ -91,5 +92,48 @@ Level.prototype = {
       }
     } //end of for loop
     return false;
-  } //end of collidesWith function
+  }, //end of collidesWith function
+  
+  createParticles: function(loopCount) { 
+      //check on every 10th tick check 
+      if(loopCount % 5 == 0) { 
+          //add particle if fewer than 100 
+          if(this.particles.length < 100) { 
+              this.particles.push({ 
+                      x: CANVAS_WIDTH, //between 0 and canvas width 
+                      y: Math.random()*canvas.width, 
+                      speed: -(2+Math.random()*3), //between 2 and 5 
+                      radius: 1+Math.random()*5, //between 5 and 10 
+                      color: "white", 
+              }); 
+          } 
+      } 
+  },
+  updateParticles: function(loopCount) { 
+    for(var i in this.particles) { 
+        var part = this.particles[i]; 
+        part.x += part.speed; 
+    } 
+  },
+  killParticles: function (loopCount){
+    for(var i in this.particles) { 
+        var part = this.particles[i]; 
+        if(part.x < 0) { 
+            part.x = CANVAS_WIDTH; 
+        } 
+    } 
+  },
+  drawParticles: function(loopCount) { 
+      var c = canvas.getContext('2d'); 
+      // c.fillStyle = "black"; 
+      c.fillRect(0,0,canvas.width,canvas.height); 
+      for(var i in this.particles) { 
+          var part = this.particles[i]; 
+          c.beginPath(); 
+          c.arc(part.x,part.y, part.radius, 0, Math.PI*2); 
+          c.closePath(); 
+          c.fillStyle = part.color; 
+          c.fill(); 
+      } 
+  }, 
 }
