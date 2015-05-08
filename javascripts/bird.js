@@ -29,17 +29,16 @@ Bird.prototype = {
     } else {
       this.drawDelay--;
     }
-    var x = (this.drawCount % 7) * 290;
+    var x = (this.drawCount % 7) * 100;
     context.drawImage(
       this.dragonImage, 
-      x,120,290,290,
+      x,0,100,100,
       this.x, this.y,50,50
     )
     
   },
   flap: function() {
     this.vel = UPFLAP;
-    console.log("flapping!");
     //reset draw count to zero if flap is clicked
     this.drawCount = 0;
   },
@@ -49,6 +48,6 @@ Bird.prototype = {
   },
   loadResource: function(){
     this.dragonImage = new Image();
-    this.dragonImage.src = "images/dragon_red.png"
+    this.dragonImage.src = "images/dragon_yellow.png"
   },
 }

@@ -8,6 +8,7 @@ function Game(context) {
   this.level = new Level(this.ctx);
   this.addEventListeners();
   this.loop = 0;
+  this.gameIsOver = false;
 };
 
 Game.prototype = {
@@ -15,23 +16,22 @@ Game.prototype = {
     this.ctx.canvas.addEventListener("mousedown", this.bird.flap.bind(this.bird));
   },
   tick: function() {
-    this.loop += 1;
+    if(!this.gameIsOver){
 
-    this.clearScreen();
-    this.level.createParticles(this.loop);
-    this.level.updateParticles(this.loop);
-    this.level.killParticles(this.loop);
-    this.level.drawParticles(this.loop);
+      this.clearScreen();
+      this.level.handleBackgroundParticles();
+      
+      this.level.tick(this.ctx);
+      this.bird.tick(this.ctx);
     
-    this.level.tick(this.ctx);
-    this.bird.tick(this.ctx);
-    
-    var score = this.level.pipeScore();
-    this.ctx.font = 'bold 50pt Arial'; 
-    this.ctx.fillStyle = "white"; 
-    this.ctx.fillText(score,700,100);
+      var score = this.level.pipeScore();
+      this.ctx.font = 'bold 50pt Arial'; 
+      this.ctx.fillStyle = "white"; 
+      this.ctx.fillText(score,700,100);
+    }
     
     if(this.level.collidesWith(this.bird.getBounds())){
+      this.gameIsOver = true;
       this.ctx.font = 'bold 50pt Arial';
       this.ctx.fillStyle = "white";
       this.ctx.fillText("YOU LOSE",225,200);
@@ -50,5 +50,6 @@ Game.prototype = {
     this.bird = new Bird(START_X, START_Y);
     this.level = new Level(this.ctx);
     this.addEventListeners();
+    this.gameIsOver = false;
   }
 }
