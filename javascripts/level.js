@@ -12,6 +12,7 @@ var BUBBLE_IMAGE_SIZE = 64; //128 x 128 png is four quadrants of height and widt
 var TOTAL_PIPES = 3;
 var STARTING_XS = [600,900,1200];
 var STARTING_GAPS = [100,150,190];
+var POSSIBLE_YVELS = [-6,-4,-2,2,4,6];
 
 function Level(context) {
   this.pipes = [];
@@ -85,12 +86,31 @@ Level.prototype = {
         localPipe.gap = Math.floor(Math.random() * 200);
         this.score += 1;
         var bubblesArrayThisPipe = localPipe.bubbles;
-        for(var j = 0; j < bubblesArrayThisPipe.length; j++){
+        for(var j = 0; j < BUBBLE_STACK_DENSITY; j++){
           bubblesArrayThisPipe[j].x = bubblesArrayThisPipe[j].x + CANVAS_WIDTH;
           if(bubblesArrayThisPipe[j].topOfCol && (bubblesArrayThisPipe[j].y > localPipe.gap)){
-            bubblesArrayThisPipe[j].y = Math.floor(Math.random() * (localPipe.gap));
+            bubblesArrayThisPipe[j].y = localPipe.gap;// Math.floor(Math.random() * (localPipe.gap));
+            
+            bubblesArrayThisPipe.push({
+              x: CANVAS_WIDTH, //xcoord of bounding box
+              y: (localPipe.gap + HOLE_HEIGHT), //ycoord of bounding box
+              xVel: Math.floor(Math.random()*4 - 4),
+              yVel: POSSIBLE_YVELS[Math.floor(Math.random()*POSSIBLE_YVELS.length)],
+              size: BUBBLE_SIZES[Math.floor(Math.random()*POSSIBLE_YVELS.length)],
+              topOfCol: true
+            });
           } else if(!bubblesArrayThisPipe[j].topOfCol && (bubblesArrayThisPipe[j].y < (localPipe.gap + HOLE_HEIGHT))){
-            bubblesArrayThisPipe[j].y = Math.floor(Math.random() * (CANVAS_HEIGHT - (localPipe.gap + HOLE_HEIGHT)) + (localPipe.gap + HOLE_HEIGHT));
+            bubblesArrayThisPipe[j].y = (localPipe.gap + HOLE_HEIGHT);// Math.floor(Math.random() * (CANVAS_HEIGHT - (localPipe.gap + HOLE_HEIGHT)) + (localPipe.gap + HOLE_HEIGHT));
+            
+            //create a new bubble that sits on edge of bounds
+            bubblesArrayThisPipe.push({
+              x: CANVAS_WIDTH, //xcoord of bounding box
+              y: localPipe.gap,
+              xVel: Math.floor(Math.random()*4 - 4),
+              yVel: POSSIBLE_YVELS[Math.floor(Math.random()*POSSIBLE_YVELS.length)],
+              size: BUBBLE_SIZES[Math.floor(Math.random()*POSSIBLE_YVELS.length)],
+              topOfCol: false
+            });
           }
         }
       }
@@ -176,14 +196,17 @@ Level.prototype = {
           ycoord = ycoordPosTwo;
           topOfCol = false
         }
-        this.pipes[j].bubbles.push({
+        var xVel = Math.floor(Math.random()*4 - 4);
+        var yVel = POSSIBLE_YVELS[Math.floor(Math.random()*4)];
+        var bubbleToAdd = new Bubble({
           x: xcoord, //xcoord of bounding box
           y: ycoord, //ycoord of bounding box
-          speed: 0,
-          pipe: this.pipes[j],
-          size: BUBBLE_SIZES[Math.floor(Math.random()*4)],
+          xVel: xVel, //velocity between -2 and +2
+          yVel: yVel,
+          sizeOf: BUBBLE_SIZES[Math.floor(Math.random()*4)],
           topOfCol: topOfCol
         })
+        this.pipes[j].bubbles.push(bubbleToAdd)
       }
     }
   },
@@ -199,7 +222,51 @@ Level.prototype = {
       var pipe = this.pipes[j];
       for(var i in pipe.bubbles){
         var bubble = pipe.bubbles[i];
-        bubble.x -= PIPE_MOVEMENT;
+        bubble.x += bubble.xVel;// (PIPE_MOVEMENT + bubble.xVel);
+        bubble.y += bubble.yVel;
+        // if bubble is in top, y cannot be less than 0, y cannot be greater than this.pipe.gap
+        //x cannot be less this.pipe.x and cannot be greater than this.pipe.x + COLUMN_WIDTH
+        
+        if(bubble.topOfCol){
+          if(bubble.y <= -32){
+            bubble.yVel = bubble.yVel * -1;
+            bubble.y = 1;
+          }
+          if(bubble.y > pipe.gap){
+            bubble.yVel = bubble.yVel * -1;
+            bubble.y = pipe.gap - 1;
+          }
+          if(bubble.x < pipe.x){
+            bubble.xVel = bubble.xVel * -1
+            bubble.x = pipe.x + 1;
+          }
+          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
+            bubble.xVel = bubble.xVel * -1;
+            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
+          }
+        } else {
+          if(bubble.y <= (pipe.gap + HOLE_HEIGHT)){
+            bubble.yVel = bubble.yVel * -1;
+            bubble.y = pipe.gap + HOLE_HEIGHT + 1;
+          }
+          if(bubble.y > CANVAS_HEIGHT){
+            bubble.yVel = bubble.yVel * -1;
+            bubble.y = CANVAS_HEIGHT - 1;
+          }
+          if(bubble.x < pipe.x){
+            bubble.xVel = bubble.xVel * -1
+            bubble.x = pipe.x + 1;
+          }
+          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
+            bubble.xVel = bubble.xVel * -1;
+            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
+          }
+        }
+        
+        if(bubble.xVel === 0){
+          
+          bubble.x -= 4;
+        }
       }
     }
   },
