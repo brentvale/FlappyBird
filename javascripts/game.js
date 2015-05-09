@@ -13,7 +13,8 @@ function Game(context) {
 
 Game.prototype = {
   addEventListeners: function(){
-    this.ctx.canvas.addEventListener("mousedown", this.bird.flap.bind(this.bird));
+    //made event listener click event for mobile compatibility
+    this.ctx.canvas.addEventListener("click", this.bird.flap.bind(this.bird));
   },
   tick: function() {
     if(!this.gameIsOver){
