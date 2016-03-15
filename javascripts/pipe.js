@@ -2,7 +2,7 @@ function Pipe(x, gap) {
   this.x = x;
   this.gap = gap;
   this.bubbles = [];
-  this.coords
+  this.coords;
 };
 
 Pipe.prototype = {
@@ -14,8 +14,5 @@ Pipe.prototype = {
   },
   addBubble: function(bubble){
     this.bubbles.push(bubble);
-  },
-  determineCoords: function(){
-    
-  },
+  }
 }

@@ -8,6 +8,12 @@
         padding: 0px;
         margin: 0px;
       }
+      #introText{
+        position: absolute;
+        left: 0;
+        top: 0;
+        color: white;
+      }
       
     </style>
     
@@ -22,12 +28,29 @@
     
     <canvas id="bird-game" width="900" height="480"></canvas>
     
-    <script>
-      var canvas = document.getElementById('bird-game'); 
-      var c = canvas.getContext('2d'); 
-      var game = new Game(c);
-      game.play();
+    <div id="introText">Press 's' to start level.</div>
     
+    <script>
+      document.body.style.overflow = "hidden";
+    
+      var windowWidth = window.innerWidth;
+      var windowHeight = window.innerHeight;
+      
+      var canvas = document.getElementById('bird-game'); 
+      canvas.style.width = windowWidth + "px";
+      canvas.style.height = windowHeight + "px";
+      
+      var c = canvas.getContext('2d'); 
+      var game = new Game(c, windowHeight, windowWidth);
+      game.prepare();
+      
+      window.addEventListener("keypress", function(event){
+        if(event.keyCode == 115){
+          game.play();
+        }
+      }, false);
+      
+      
     </script>
   </body>
 </html>

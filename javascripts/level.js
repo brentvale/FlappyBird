@@ -4,8 +4,8 @@ var BACKGROUND_COLOR = "#87CEFF";
 var HOLE_HEIGHT = 180;
 var PIPE_WIDTH = 75;
 var CANVAS_BASE = 0;
-var CANVAS_HEIGHT = 480;
-var CANVAS_WIDTH = 900;
+var CANVAS_HEIGHT = 0;
+var CANVAS_WIDTH = 0;
 var BUBBLE_SIZES = ["small", "med", "large", "xl"];
 var BUBBLE_STACK_DENSITY = 80;
 var BUBBLE_IMAGE_SIZE = 64; //128 x 128 png is four quadrants of height and width == 64
@@ -14,16 +14,16 @@ var STARTING_XS = [600,900,1200];
 var STARTING_GAPS = [100,150,190];
 var POSSIBLE_YVELS = [-6,-4,-2,2,4,6];
 
-function Level(context) {
+function Level(context, height, width) {
   this.pipes = [];
   this.createPipes();
   this.ctx = context;
   this.score = 0;
   this.particles = [];
-  this.bubbles = [];
-  this.loadResource();
   this.loopCount = 0;
   this.createBubbles();
+  CANVAS_HEIGHT = height;
+  CANVAS_WIDTH = width;
 }
 
 Level.prototype = {
@@ -32,36 +32,70 @@ Level.prototype = {
       this.pipes.push(new Pipe(STARTING_XS[i], STARTING_GAPS[i]))
     }
   },
-  drawBackground: function(context) {
-    // context.fillStyle = BACKGROUND_COLOR;
-    context.beginPath();
-    context.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    // context.fill();
+  clearScreen: function(){
+    this.ctx.fillStyle = "black";
+    this.ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    this.ctx.fill();
+  },
+  createBackgroundParticles: function() { 
+      //add particle if fewer than 100 
+    for(var i = 0; i < 200; i++){
+      this.particles.push({ 
+              x: Math.random()*parseInt(canvas.style.width.slice(0,-2)),
+              y: Math.random()*parseInt(canvas.style.height.slice(0,-2)),
+              speed: -(2+Math.random()*3), //between 2 and 5 
+              radius: 1+Math.random()*5, //between 5 and 10 
+              color: "white", 
+      }); 
+    }
+    this.backgroundParticlesTick(); 
+  },
+  
+  backgroundParticlesTick: function(){
+    this.mainInterval = setInterval(this.handleBackgroundParticles.bind(this), 50);
+  },
+  
+  handleBackgroundParticles: function(){
+    this.clearScreen();
+    this.updateBackgroundParticles();
+    this.killBackgroundParticles();
+    this.drawBackgroundParticles();
+  },
+  updateBackgroundParticles: function() { 
+    for(var i in this.particles) { 
+        var part = this.particles[i]; 
+        part.x += part.speed; 
+    } 
+  },
+  killBackgroundParticles: function (){
+    for(var i in this.particles) { 
+        var part = this.particles[i]; 
+        if(part.x < 0) { 
+            part.x = CANVAS_WIDTH; 
+        } 
+    } 
+  },
+  drawBackgroundParticles: function() { 
+      this.ctx.fillRect(0,0,canvas.width,canvas.height); 
+      for(var i in this.particles) { 
+          var part = this.particles[i]; 
+          this.ctx.beginPath(); 
+          this.ctx.arc(part.x,part.y, part.radius, 0, Math.PI*2); 
+          this.ctx.closePath(); 
+          this.ctx.fillStyle = part.color; 
+          this.ctx.fill(); 
+      } 
   },
   drawPipes: function(context){
     for(var i = 0; i < 3; i++){
       context.fillStyle = PIPE_COLOR;
       context.beginPath();
       var rects = this.recCoords(i);
-      
+    
       context.rect(rects[0], rects[1], rects[2], rects[3]);
       context.rect(rects[4], rects[5], rects[6], rects[7]);
     }
   },
-  
-  handleBackgroundParticles: function(){
-    this.loopCount += 1;
-    this.createBackgroundParticles();
-    this.updateBackgroundParticles();
-    this.killBackgroundParticles();
-    this.drawBackgroundParticles();
-  
-  },
-  loadResource: function(){
-    this.bubbleImage = new Image();
-    this.bubbleImage.src = "images/Bubbles_for_flappy_dragon.png"
-  },
-  
   recCoords: function(idx) {
     var pipe = this.pipes[idx];
     var x1 = pipe.x;
@@ -118,11 +152,11 @@ Level.prototype = {
   },
   
   tick: function(context){
-    this.drawBackground(context);
+    
     this.movePipes();
     this.drawPipes(context);
-    this.updateBubbles();
-    this.drawBubbles();
+    // this.updateBubbles();
+//     this.drawBubbles();
   },
   
   pipeScore: function(){
@@ -158,22 +192,7 @@ Level.prototype = {
     return false;
   }, //end of collidesWith function
   
-  //Bubbles and particles logic
-  createBackgroundParticles: function() { 
-      //check on every 10th tick check 
-      if(this.loopCount % 5 == 0) { 
-          //add particle if fewer than 100 
-          if(this.particles.length < 100) { 
-              this.particles.push({ 
-                      x: CANVAS_WIDTH, //all particles created on right side of canvas
-                      y: Math.random()*canvas.height, 
-                      speed: -(2+Math.random()*3), //between 2 and 5 
-                      radius: 1+Math.random()*5, //between 5 and 10 
-                      color: "white", 
-              }); 
-          } 
-      } 
-  },
+  
   //creates 1 stack, top and bottom for each pipe
   createBubbles: function(){ 
     for(var j = 0; j < this.pipes.length; j ++){
@@ -211,88 +230,64 @@ Level.prototype = {
     }
   },
   
-  updateBackgroundParticles: function() { 
-    for(var i in this.particles) { 
-        var part = this.particles[i]; 
-        part.x += part.speed; 
-    } 
-  },
-  updateBubbles: function(){
-    for(var j in this.pipes){
-      var pipe = this.pipes[j];
-      for(var i in pipe.bubbles){
-        var bubble = pipe.bubbles[i];
-        bubble.x += bubble.xVel;// (PIPE_MOVEMENT + bubble.xVel);
-        bubble.y += bubble.yVel;
-        // if bubble is in top, y cannot be less than 0, y cannot be greater than this.pipe.gap
-        //x cannot be less this.pipe.x and cannot be greater than this.pipe.x + COLUMN_WIDTH
-        
-        if(bubble.topOfCol){
-          if(bubble.y <= -32){
-            bubble.yVel = bubble.yVel * -1;
-            bubble.y = 1;
-          }
-          if(bubble.y > pipe.gap){
-            bubble.yVel = bubble.yVel * -1;
-            bubble.y = pipe.gap - 1;
-          }
-          if(bubble.x < pipe.x){
-            bubble.xVel = bubble.xVel * -1
-            bubble.x = pipe.x + 1;
-          }
-          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
-            bubble.xVel = bubble.xVel * -1;
-            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
-          }
-        } else {
-          if(bubble.y <= (pipe.gap + HOLE_HEIGHT)){
-            bubble.yVel = bubble.yVel * -1;
-            bubble.y = pipe.gap + HOLE_HEIGHT + 1;
-          }
-          if(bubble.y > CANVAS_HEIGHT){
-            bubble.yVel = bubble.yVel * -1;
-            bubble.y = CANVAS_HEIGHT - 1;
-          }
-          if(bubble.x < pipe.x){
-            bubble.xVel = bubble.xVel * -1
-            bubble.x = pipe.x + 1;
-          }
-          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
-            bubble.xVel = bubble.xVel * -1;
-            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
-          }
-        }
-        
-        if(bubble.xVel === 0){
-          
-          bubble.x -= 4;
-        }
-      }
-    }
-  },
   
-  killBackgroundParticles: function (){
-    for(var i in this.particles) { 
-        var part = this.particles[i]; 
-        if(part.x < 0) { 
-            part.x = CANVAS_WIDTH; 
-        } 
-    } 
-  },
+  // updateBubbles: function(){
+ //    for(var j in this.pipes){
+ //      var pipe = this.pipes[j];
+ //      for(var i in pipe.bubbles){
+ //        var bubble = pipe.bubbles[i];
+ //        bubble.x += bubble.xVel;// (PIPE_MOVEMENT + bubble.xVel);
+ //        bubble.y += bubble.yVel;
+ //        // if bubble is in top, y cannot be less than 0, y cannot be greater than this.pipe.gap
+ //        //x cannot be less this.pipe.x and cannot be greater than this.pipe.x + COLUMN_WIDTH
+ //
+ //        if(bubble.topOfCol){
+ //          if(bubble.y <= -32){
+ //            bubble.yVel = bubble.yVel * -1;
+ //            bubble.y = 1;
+ //          }
+ //          if(bubble.y > pipe.gap){
+ //            bubble.yVel = bubble.yVel * -1;
+ //            bubble.y = pipe.gap - 1;
+ //          }
+ //          if(bubble.x < pipe.x){
+ //            bubble.xVel = bubble.xVel * -1
+ //            bubble.x = pipe.x + 1;
+ //          }
+ //          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
+ //            bubble.xVel = bubble.xVel * -1;
+ //            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
+ //          }
+ //        } else {
+ //          if(bubble.y <= (pipe.gap + HOLE_HEIGHT)){
+ //            bubble.yVel = bubble.yVel * -1;
+ //            bubble.y = pipe.gap + HOLE_HEIGHT + 1;
+ //          }
+ //          if(bubble.y > CANVAS_HEIGHT){
+ //            bubble.yVel = bubble.yVel * -1;
+ //            bubble.y = CANVAS_HEIGHT - 1;
+ //          }
+ //          if(bubble.x < pipe.x){
+ //            bubble.xVel = bubble.xVel * -1
+ //            bubble.x = pipe.x + 1;
+ //          }
+ //          if(bubble.x >= (pipe.x + PIPE_WIDTH)){
+ //            bubble.xVel = bubble.xVel * -1;
+ //            bubble.x = (pipe.x + PIPE_WIDTH) - 1;
+ //          }
+ //        }
+ //
+ //        if(bubble.xVel === 0){
+ //
+ //          bubble.x -= 4;
+ //        }
+ //      }
+ //    }
+ //  },
   
-  drawBackgroundParticles: function() { 
-      
-      // this.ctx.fillStyle = "black";
-      this.ctx.fillRect(0,0,canvas.width,canvas.height); 
-      for(var i in this.particles) { 
-          var part = this.particles[i]; 
-          this.ctx.beginPath(); 
-          this.ctx.arc(part.x,part.y, part.radius, 0, Math.PI*2); 
-          this.ctx.closePath(); 
-          this.ctx.fillStyle = part.color; 
-          this.ctx.fill(); 
-      } 
-  }, 
+  
+  
+   
   
   drawBubbles: function(){
     for(var j in this.pipes){

@@ -2,10 +2,10 @@ var TICK_INTERVAL = 60;
 var START_X = 50;
 var START_Y = 50;
 
-function Game(context) {
+function Game(context, height, width) {
   this.ctx = context;
   this.bird = new Bird(START_X, START_Y);
-  this.level = new Level(this.ctx);
+  this.level = new Level(this.ctx, height, width);
   this.addEventListeners();
   this.loop = 0;
   this.gameIsOver = false;
@@ -17,11 +17,8 @@ Game.prototype = {
   },
   tick: function() {
     if(!this.gameIsOver){
-
-      this.clearScreen();
-      this.level.handleBackgroundParticles();
-      
-      this.level.tick(this.ctx);
+      //handling level tick in level so that game intro sequence 
+      // this.level.tick(this.ctx);
       this.bird.tick(this.ctx);
     
       var score = this.level.pipeScore();
@@ -34,17 +31,19 @@ Game.prototype = {
       this.gameIsOver = true;
       this.ctx.font = 'bold 50pt Arial';
       this.ctx.fillStyle = "white";
-      this.ctx.fillText("YOU LOSE",225,200);
-      setTimeout(this.restart.bind(this), 2000)
+      this.ctx.fillText("YOU LOSE", parseInt(this.ctx.canvas.style.width.slice(0,-2))/4,200);
+      clearInterval(this.level.mainInterval);
+      clearInterval(this.playInterval);
+      
+      //Game over, reload game
     }
   },
-  clearScreen: function(){
-    this.ctx.fillStyle = "black";
-    this.ctx.rect(0, 0, 900, 480);
-    this.ctx.fill();
+  prepare: function(){
+    this.level.clearScreen();
+    this.level.createBackgroundParticles();
   },
   play: function(){
-    setInterval(this.tick.bind(this), 1000 / TICK_INTERVAL);
+    this.playInterval = setInterval(this.tick.bind(this), 1000 / TICK_INTERVAL);
   },
   restart: function(){
     this.bird = new Bird(START_X, START_Y);
