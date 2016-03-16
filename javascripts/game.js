@@ -16,15 +16,14 @@ Game.prototype = {
     this.ctx.canvas.addEventListener("mousedown", this.bird.flap.bind(this.bird));
   },
   tick: function() {
+    this.loop += 1;
     if(!this.gameIsOver){
-      //handling level tick in level so that game intro sequence 
-      // this.level.tick(this.ctx);
+      this.level.clearScreen();
+      this.level.backgroundAndPipesTick();
       this.bird.tick(this.ctx);
-    
-      var score = this.level.pipeScore();
       this.ctx.font = 'bold 50pt Arial'; 
       this.ctx.fillStyle = "white"; 
-      this.ctx.fillText(score,700,100);
+      this.ctx.fillText(this.level.score,700,100);
     }
     
     if(this.level.collidesWith(this.bird.getBounds())){
@@ -43,7 +42,8 @@ Game.prototype = {
     this.level.createBackgroundParticles();
   },
   play: function(){
-    this.playInterval = setInterval(this.tick.bind(this), 1000 / TICK_INTERVAL);
+    this.level.clearStartInterval();
+    this.playInterval = setInterval(this.tick.bind(this), 15);
   },
   restart: function(){
     this.bird = new Bird(START_X, START_Y);

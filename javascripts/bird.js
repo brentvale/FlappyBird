@@ -1,5 +1,4 @@
 var GRAVITY = 0.2;
-var BIRD_COLOR = "red";
 var BIRD_SIZE = 30;
 var UPFLAP = -5;
 var DRAGON_FLAP_DELAY = 4;
@@ -35,7 +34,6 @@ Bird.prototype = {
       x,0,100,100,
       this.x, this.y,50,50
     )
-    
   },
   flap: function() {
     this.vel = UPFLAP;
