@@ -15,7 +15,7 @@ var STARTING_GAPS = [100,150,190];
 var POSSIBLE_YVELS = [-6,-4,-2,2,4,6];
 var TOTAL_BACKGROUND_PARTICLES = 100;
 
-function Level(context, height, width) {
+function Level(context, height, width, bird) {
   this.pipes = [];
   this.createPipes();
   this.ctx = context;
@@ -24,6 +24,7 @@ function Level(context, height, width) {
   this.loopCount = 0;
   CANVAS_HEIGHT = height;
   CANVAS_WIDTH = width;
+  this.bird = bird;
 }
 
 Level.prototype = {
@@ -39,7 +40,7 @@ Level.prototype = {
     this.ctx.fill();
   },
   clearStartInterval: function(){
-    clearInterval(this.startInterval)
+    clearInterval(this.startInterval);
   },
   createBackgroundParticles: function() { 
     for(var i = 0; i < TOTAL_BACKGROUND_PARTICLES; i++){
@@ -63,6 +64,7 @@ Level.prototype = {
   handleBackgroundParticlesIntro: function(){
     this.clearScreen();
     this.handleBackgroundParticles();
+    this.bird.draw();
   },
   handleBackgroundParticles: function(){
     this.updateBackgroundParticles();

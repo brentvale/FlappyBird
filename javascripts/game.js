@@ -1,11 +1,12 @@
 var TICK_INTERVAL = 60;
 var START_X = 50;
-var START_Y = 50;
+var START_Y = 0;
 
 function Game(context, height, width) {
   this.ctx = context;
-  this.bird = new Bird(START_X, START_Y);
-  this.level = new Level(this.ctx, height, width);
+  START_Y = height/3;
+  this.bird = new Bird(START_X, START_Y, context);
+  this.level = new Level(this.ctx, height, width, this.bird);
   this.addEventListeners();
   this.loop = 0;
   this.gameIsOver = false;
@@ -43,10 +44,10 @@ Game.prototype = {
   },
   play: function(){
     this.level.clearStartInterval();
-    this.playInterval = setInterval(this.tick.bind(this), 15);
+    this.playInterval = setInterval(this.tick.bind(this), 10);
   },
   restart: function(){
-    this.bird = new Bird(START_X, START_Y);
+    this.bird = new Bird(START_X, START_Y, this.ctx);
     this.level = new Level(this.ctx);
     this.addEventListeners();
     this.gameIsOver = false;
