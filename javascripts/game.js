@@ -1,6 +1,8 @@
 var TICK_INTERVAL = 60;
 var START_X = 50;
 var START_Y = 0;
+var WINDOW_HEIGHT = 0;
+var WINDOW_WIDTH = 0;
 
 function Game(context, height, width) {
   this.ctx = context;
@@ -10,6 +12,8 @@ function Game(context, height, width) {
   this.addEventListeners();
   this.loop = 0;
   this.gameIsOver = false;
+  WINDOW_HEIGHT = height;
+  WINDOW_WIDTH = width;
 };
 
 Game.prototype = {
@@ -34,8 +38,21 @@ Game.prototype = {
       this.ctx.fillText("YOU LOSE", parseInt(this.ctx.canvas.style.width.slice(0,-2))/4,200);
       clearInterval(this.level.mainInterval);
       clearInterval(this.playInterval);
-      
-      //Game over, reload game
+      var that = this;
+      setTimeout(function(){
+        var c = that.ctx.canvas.getContext('2d'); 
+        var newGame = new Game(c, WINDOW_HEIGHT, WINDOW_WIDTH);
+        newGame.prepare();
+        
+        window.addEventListener("mousedown", function init(event) {
+          window.removeEventListener("mousedown", init, false);
+          gamePlay();
+        }, false);
+        
+        function gamePlay() {
+          newGame.play();
+        }
+      }, 3000);
     }
   },
   prepare: function(){
