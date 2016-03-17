@@ -1,13 +1,19 @@
 var TICK_INTERVAL = 60;
 var START_X = 50;
-var START_Y = 50;
+var START_Y = 0;
+var WINDOW_HEIGHT = 0;
+var WINDOW_WIDTH = 0;
 
-function Game(context) {
+function Game(context, height, width) {
   this.ctx = context;
-  this.bird = new Bird(START_X, START_Y);
-  this.level = new Level(this.ctx);
+  START_Y = height/3;
+  this.bird = new Bird(START_X, START_Y, context);
+  this.level = new Level(this.ctx, height, width, this.bird);
   this.addEventListeners();
   this.loop = 0;
+  this.gameIsOver = false;
+  WINDOW_HEIGHT = height;
+  WINDOW_WIDTH = width;
 };
 
 Game.prototype = {
@@ -16,39 +22,51 @@ Game.prototype = {
   },
   tick: function() {
     this.loop += 1;
-
-    this.clearScreen();
-    this.level.createParticles(this.loop);
-    this.level.updateParticles(this.loop);
-    this.level.killParticles(this.loop);
-    this.level.drawParticles(this.loop);
-    
-    this.level.tick(this.ctx);
-    this.bird.tick(this.ctx);
-    
-    var score = this.level.pipeScore();
-    this.ctx.font = 'bold 50pt Arial'; 
-    this.ctx.fillStyle = "white"; 
-    this.ctx.fillText(score,700,100);
+    if(!this.gameIsOver){
+      this.level.clearScreen();
+      this.level.backgroundAndPipesTick();
+      this.bird.tick(this.ctx);
+      this.ctx.font = 'bold 50pt Arial'; 
+      this.ctx.fillStyle = "white"; 
+      this.ctx.fillText(this.level.score,700,100);
+    }
     
     if(this.level.collidesWith(this.bird.getBounds())){
+      this.gameIsOver = true;
       this.ctx.font = 'bold 50pt Arial';
       this.ctx.fillStyle = "white";
-      this.ctx.fillText("YOU LOSE",225,200);
-      setTimeout(this.restart.bind(this), 2000)
+      this.ctx.fillText("YOU LOSE", parseInt(this.ctx.canvas.style.width.slice(0,-2))/4,200);
+      clearInterval(this.level.mainInterval);
+      clearInterval(this.playInterval);
+      var that = this;
+      setTimeout(function(){
+        var c = that.ctx.canvas.getContext('2d'); 
+        var newGame = new Game(c, WINDOW_HEIGHT, WINDOW_WIDTH);
+        newGame.prepare();
+        
+        window.addEventListener("mousedown", function init(event) {
+          window.removeEventListener("mousedown", init, false);
+          gamePlay();
+        }, false);
+        
+        function gamePlay() {
+          newGame.play();
+        }
+      }, 3000);
     }
   },
-  clearScreen: function(){
-    this.ctx.fillStyle = "black";
-    this.ctx.rect(0, 0, 900, 480);
-    this.ctx.fill();
+  prepare: function(){
+    this.level.clearScreen();
+    this.level.createBackgroundParticles();
   },
   play: function(){
-    setInterval(this.tick.bind(this), 1000 / TICK_INTERVAL);
+    this.level.clearStartInterval();
+    this.playInterval = setInterval(this.tick.bind(this), 10);
   },
   restart: function(){
-    this.bird = new Bird(START_X, START_Y);
+    this.bird = new Bird(START_X, START_Y, this.ctx);
     this.level = new Level(this.ctx);
     this.addEventListeners();
+    this.gameIsOver = false;
   }
 }

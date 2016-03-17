@@ -4,66 +4,116 @@ var BACKGROUND_COLOR = "#87CEFF";
 var HOLE_HEIGHT = 180;
 var PIPE_WIDTH = 75;
 var CANVAS_BASE = 0;
-var CANVAS_HEIGHT = 480;
-var CANVAS_WIDTH = 900;
+var CANVAS_HEIGHT = 0;
+var CANVAS_WIDTH = 0;
+var BUBBLE_SIZES = ["small", "med", "large", "xl"];
+var BUBBLE_STACK_DENSITY = 80;
+var BUBBLE_IMAGE_SIZE = 64; //128 x 128 png is four quadrants of height and width == 64
+var TOTAL_PIPES = 3;
+var STARTING_XS = [600,900,1200];
+var STARTING_GAPS = [100,150,190];
+var POSSIBLE_YVELS = [-6,-4,-2,2,4,6];
+var TOTAL_BACKGROUND_PARTICLES = 100;
 
-function Level(context) {
-  this.pipes = [{x:600, gap:100}, {x:900, gap:150}, {x:1200, gap:190}];
+function Level(context, height, width, bird) {
+  this.pipes = [];
+  this.createPipes();
+  this.ctx = context;
   this.score = 0;
   this.particles = [];
+  this.loopCount = 0;
+  CANVAS_HEIGHT = height;
+  CANVAS_WIDTH = width;
+  this.bird = bird;
 }
 
 Level.prototype = {
-  drawBackground: function(context) {
-    // context.fillStyle = BACKGROUND_COLOR;
-    context.beginPath();
-    context.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    // context.fill();
-  },
-  drawPipes: function(context){
-    for(var i = 0; i < 3; i++){
-      context.fillStyle = PIPE_COLOR;
-      context.beginPath();
-      var rects = this.recCoords(i);
-      
-      context.rect(rects[0], rects[1], rects[2], rects[3]);
-      context.rect(rects[4], rects[5], rects[6], rects[7]);
-      
-      context.fill();
+  createPipes: function(){
+    for(var i = 0; i < TOTAL_PIPES; i++){
+      this.pipes.push(new Pipe(STARTING_XS[i], STARTING_GAPS[i]))
     }
   },
-  recCoords: function(idx) {
-    var pipe = this.pipes[idx];
-    var x1 = pipe.x;
-    var y1 = CANVAS_BASE;
-    var x2 = PIPE_WIDTH;
-    var y2 = pipe.gap;
-    
-    var x3 = pipe.x;
-    var y3 = pipe.gap + HOLE_HEIGHT;
-    var x4 = PIPE_WIDTH;
-    var y4 = CANVAS_HEIGHT;
-    
-    return [x1, y1, x2, y2, x3, y3, x4, y4];
+  clearScreen: function(){
+    this.ctx.beginPath();
+    this.ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    this.ctx.fillStyle = "black";
+    this.ctx.fill();
+  },
+  clearStartInterval: function(){
+    clearInterval(this.startInterval);
+  },
+  createBackgroundParticles: function() { 
+    for(var i = 0; i < TOTAL_BACKGROUND_PARTICLES; i++){
+      this.particles.push({ 
+              x: Math.random()*parseInt(canvas.style.width.slice(0,-2)),
+              y: Math.random()*parseInt(canvas.style.height.slice(0,-2)),
+              speed: -(2+Math.random()), //between 2 and 5 
+              radius: 1+Math.random()*5, //between 5 and 10 
+              color: "white", 
+      }); 
+    }
+    this.backgroundParticlesTick(); 
+  },
+  backgroundAndPipesTick: function(){
+    this.handlePipes();
+    this.handleBackgroundParticles();
+  },
+  backgroundParticlesTick: function(){
+    this.startInterval = setInterval(this.handleBackgroundParticlesIntro.bind(this), 15);
+  },
+  handleBackgroundParticlesIntro: function(){
+    this.clearScreen();
+    this.handleBackgroundParticles();
+    this.bird.draw();
+  },
+  handleBackgroundParticles: function(){
+    this.updateBackgroundParticles();
+    this.drawBackgroundParticles();
+  },
+  updateBackgroundParticles: function() { 
+    for(var i in this.particles) { 
+        var part = this.particles[i]; 
+        part.x += part.speed; 
+        //if particle reaches screen edge, loop around to next screen edge
+        if(part.x < 0) { 
+            part.x = CANVAS_WIDTH; 
+        } 
+    } 
+  },
+  drawBackgroundParticles: function() { 
+      for(var i in this.particles) { 
+          var part = this.particles[i]; 
+          this.ctx.beginPath(); 
+          this.ctx.arc(part.x,part.y, part.radius, 0, Math.PI*2); 
+          this.ctx.closePath(); 
+          this.ctx.fillStyle = part.color; 
+          this.ctx.fill(); 
+      } 
+  },
+  drawPipes: function(){
+    for(var i = 0; i < 3; i++){
+      var pipe = this.pipes[i];
+      this.ctx.beginPath();
+      this.ctx.fillStyle = "green";
+      this.ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gap);
+      this.ctx.fillRect(pipe.x, (pipe.gap + HOLE_HEIGHT), PIPE_WIDTH, CANVAS_HEIGHT);
+      this.ctx.fill();
+    }
   },
   movePipes: function(){
-    var that = this;
-    this.pipes.forEach(function(pipe){
-      pipe.x = pipe.x - PIPE_MOVEMENT;
-      if(pipe.x < 0){
-        pipe.x = CANVAS_WIDTH;
-        pipe.gap = Math.floor(Math.random() * 200);
-        that.score += 1;
+    for(var i = 0; i < this.pipes.length; i++){
+      var localPipe = this.pipes[i];
+      localPipe.x = localPipe.x - PIPE_MOVEMENT;
+      if(localPipe.x < 0){
+        localPipe.x = CANVAS_WIDTH;
+        localPipe.gap = Math.floor(Math.random() * 200);
+        this.score += 1;
       }
-    })
+    }
   },
-  tick: function(context){
-    this.drawBackground(context);
+  handlePipes: function(){
     this.movePipes();
-    this.drawPipes(context);
-  },
-  pipeScore: function(){
-    return this.score;
+    this.drawPipes();
   },
   collidesWith: function(birdBounds){
     var x = birdBounds.topLeft[0];
@@ -71,16 +121,17 @@ Level.prototype = {
     var a = birdBounds.bottomRight[0];
     var b = birdBounds.bottomRight[1];
     for(var i = 0; i < 3; i++){
-      var rects = this.recCoords(i);
-      var x1 = rects[0];
-      var y1 = rects[1];
-      var a1 = rects[2];
-      var b1 = rects[3];
+      var pipe = this.pipes[i];
       
-      var x2 = rects[4];
-      var y2 = rects[5];
-      var a2 = rects[6];
-      var b2 = rects[7];
+      var x1 = pipe.x;
+      var y1 = 0;
+      var a1 = PIPE_WIDTH;
+      var b1 = pipe.gap;
+      
+      var x2 = pipe.x;
+      var y2 = (pipe.gap + HOLE_HEIGHT);
+      var a2 = PIPE_WIDTH;
+      var b2 = CANVAS_HEIGHT;
       if(a > x1 && a1 > x && b > y1 && b1 > y){
         return true;
       }
@@ -93,47 +144,4 @@ Level.prototype = {
     } //end of for loop
     return false;
   }, //end of collidesWith function
-  
-  createParticles: function(loopCount) { 
-      //check on every 10th tick check 
-      if(loopCount % 5 == 0) { 
-          //add particle if fewer than 100 
-          if(this.particles.length < 100) { 
-              this.particles.push({ 
-                      x: CANVAS_WIDTH, //between 0 and canvas width 
-                      y: Math.random()*canvas.width, 
-                      speed: -(2+Math.random()*3), //between 2 and 5 
-                      radius: 1+Math.random()*5, //between 5 and 10 
-                      color: "white", 
-              }); 
-          } 
-      } 
-  },
-  updateParticles: function(loopCount) { 
-    for(var i in this.particles) { 
-        var part = this.particles[i]; 
-        part.x += part.speed; 
-    } 
-  },
-  killParticles: function (loopCount){
-    for(var i in this.particles) { 
-        var part = this.particles[i]; 
-        if(part.x < 0) { 
-            part.x = CANVAS_WIDTH; 
-        } 
-    } 
-  },
-  drawParticles: function(loopCount) { 
-      var c = canvas.getContext('2d'); 
-      // c.fillStyle = "black"; 
-      c.fillRect(0,0,canvas.width,canvas.height); 
-      for(var i in this.particles) { 
-          var part = this.particles[i]; 
-          c.beginPath(); 
-          c.arc(part.x,part.y, part.radius, 0, Math.PI*2); 
-          c.closePath(); 
-          c.fillStyle = part.color; 
-          c.fill(); 
-      } 
-  }, 
 }
