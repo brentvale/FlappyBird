@@ -25,7 +25,7 @@ function Level(context, height, width, bird) {
   CANVAS_HEIGHT = height;
   CANVAS_WIDTH = width;
   this.bird = bird;
-}
+};
 
 Level.prototype = {
   createPipes: function(){

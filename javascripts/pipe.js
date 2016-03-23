@@ -11,4 +11,4 @@ Pipe.prototype = {
   gap: function(){
     return this.gap;
   },
-}
+};

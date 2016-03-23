@@ -9,6 +9,7 @@ function Game(context, height, width) {
   START_Y = height/3;
   this.bird = new Bird(START_X, START_Y, context);
   this.level = new Level(this.ctx, height, width, this.bird);
+  this.gameRecord = new Record(height, width);
   this.addEventListeners();
   this.loop = 0;
   this.gameIsOver = false;
@@ -35,24 +36,27 @@ Game.prototype = {
       this.gameIsOver = true;
       this.ctx.font = 'bold 50pt Arial';
       this.ctx.fillStyle = "white";
-      this.ctx.fillText("YOU LOSE", parseInt(this.ctx.canvas.style.width.slice(0,-2))/4,200);
+      this.ctx.fillText("Game Over", parseInt(this.ctx.canvas.style.width.slice(0,-2))/4,200);
       clearInterval(this.level.mainInterval);
       clearInterval(this.playInterval);
       var that = this;
-      setTimeout(function(){
-        var c = that.ctx.canvas.getContext('2d'); 
-        var newGame = new Game(c, WINDOW_HEIGHT, WINDOW_WIDTH);
-        newGame.prepare();
-        
-        window.addEventListener("mousedown", function init(event) {
-          window.removeEventListener("mousedown", init, false);
-          gamePlay();
-        }, false);
-        
-        function gamePlay() {
-          newGame.play();
-        }
-      }, 3000);
+      
+      this.gameRecord.popUpModal(this.level.score);
+      
+      // setTimeout(function(){
+//         var c = that.ctx.canvas.getContext('2d');
+//         var newGame = new Game(c, WINDOW_HEIGHT, WINDOW_WIDTH);
+//         newGame.prepare();
+//
+//         window.addEventListener("mousedown", function init(event) {
+//           window.removeEventListener("mousedown", init, false);
+//           gamePlay();
+//         }, false);
+//
+//         function gamePlay() {
+//           newGame.play();
+//         }
+//       }, 3000);
     }
   },
   prepare: function(){

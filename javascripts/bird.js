@@ -16,7 +16,7 @@ function Bird(x, y, context){
   this.drawDelay = DRAGON_FLAP_DELAY;
   this.ctx = context;
   this.pos = true;
-}
+};
 
 Bird.prototype = {
   tick: function() {

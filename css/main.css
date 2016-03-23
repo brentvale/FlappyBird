@@ -1,0 +1,23 @@
+html, body, canvas {
+  padding: 0px;
+  margin: 0px;
+}
+#introText{
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: white;
+  font-size: 30px;
+  margin-top: 150px;
+}
+.modal{
+  width: 100px;
+  height: 100px;
+  background-color: white;
+  border: 1px solid red;
+  position: absolute;
+  text-align:center;
+}
+.modal-input {
+
+}
