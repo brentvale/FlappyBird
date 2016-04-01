@@ -26,8 +26,8 @@
       var windowHeight = window.innerHeight;
       
       var canvas = document.getElementById('bird-game'); 
-      canvas.style.width = windowWidth + "px";
-      canvas.style.height = windowHeight + "px";
+      canvas.width = windowWidth;
+      canvas.height = windowHeight;
       
       var c = canvas.getContext('2d'); 
       var game = new Game(c, windowHeight, windowWidth);

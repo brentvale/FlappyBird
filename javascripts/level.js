@@ -4,38 +4,37 @@ var BACKGROUND_COLOR = "#87CEFF";
 var HOLE_HEIGHT = 180;
 var PIPE_WIDTH = 75;
 var CANVAS_BASE = 0;
-var CANVAS_HEIGHT = 0;
-var CANVAS_WIDTH = 0;
 var BUBBLE_SIZES = ["small", "med", "large", "xl"];
 var BUBBLE_STACK_DENSITY = 80;
 var BUBBLE_IMAGE_SIZE = 64; //128 x 128 png is four quadrants of height and width == 64
 var TOTAL_PIPES = 3;
 var STARTING_XS = [600,900,1200];
-var STARTING_GAPS = [100,150,190];
 var POSSIBLE_YVELS = [-6,-4,-2,2,4,6];
 var TOTAL_BACKGROUND_PARTICLES = 100;
 
 function Level(context, height, width, bird) {
+  this.height = height;
+  this.width = width;
   this.pipes = [];
   this.createPipes();
   this.ctx = context;
   this.score = 0;
   this.particles = [];
   this.loopCount = 0;
-  CANVAS_HEIGHT = height;
-  CANVAS_WIDTH = width;
   this.bird = bird;
 };
 
 Level.prototype = {
   createPipes: function(){
+    var startingGaps = [(this.height/2 - HOLE_HEIGHT/2), (this.height/2 + 50 - HOLE_HEIGHT/2)
+      , (this.height/2 - 50 - HOLE_HEIGHT/2)];
     for(var i = 0; i < TOTAL_PIPES; i++){
-      this.pipes.push(new Pipe(STARTING_XS[i], STARTING_GAPS[i]))
+      this.pipes.push(new Pipe(STARTING_XS[i], startingGaps[i]))
     }
   },
   clearScreen: function(){
     this.ctx.beginPath();
-    this.ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    this.ctx.rect(0, 0, this.width, this.height);
     this.ctx.fillStyle = "black";
     this.ctx.fill();
   },
@@ -45,8 +44,8 @@ Level.prototype = {
   createBackgroundParticles: function() { 
     for(var i = 0; i < TOTAL_BACKGROUND_PARTICLES; i++){
       this.particles.push({ 
-              x: Math.random()*parseInt(canvas.style.width.slice(0,-2)),
-              y: Math.random()*parseInt(canvas.style.height.slice(0,-2)),
+              y: Math.random()*parseInt(this.height),
+              x: Math.random()*parseInt(this.width),
               speed: -(2+Math.random()), //between 2 and 5 
               radius: 1+Math.random()*5, //between 5 and 10 
               color: "white", 
@@ -76,7 +75,7 @@ Level.prototype = {
         part.x += part.speed; 
         //if particle reaches screen edge, loop around to next screen edge
         if(part.x < 0) { 
-            part.x = CANVAS_WIDTH; 
+            part.x = this.width; 
         } 
     } 
   },
@@ -96,7 +95,7 @@ Level.prototype = {
       this.ctx.beginPath();
       this.ctx.fillStyle = "green";
       this.ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gap);
-      this.ctx.fillRect(pipe.x, (pipe.gap + HOLE_HEIGHT), PIPE_WIDTH, CANVAS_HEIGHT);
+      this.ctx.fillRect(pipe.x, (pipe.gap + HOLE_HEIGHT), PIPE_WIDTH, this.height);
       this.ctx.fill();
     }
   },
@@ -105,8 +104,10 @@ Level.prototype = {
       var localPipe = this.pipes[i];
       localPipe.x = localPipe.x - PIPE_MOVEMENT;
       if(localPipe.x < 0){
-        localPipe.x = CANVAS_WIDTH;
-        localPipe.gap = Math.floor(Math.random() * 200);
+        localPipe.x = this.width;
+        //contain pipe gap to middle 60% of screen height
+        //achieved by taking 80% of gap and moving it down 20% of the screen
+        localPipe.gap = Math.floor(Math.random() * (this.height * .6) + (.1*this.height));
         this.score += 1;
       }
     }
@@ -131,14 +132,14 @@ Level.prototype = {
       var x2 = pipe.x;
       var y2 = (pipe.gap + HOLE_HEIGHT);
       var a2 = PIPE_WIDTH;
-      var b2 = CANVAS_HEIGHT;
+      var b2 = this.height;
       if(a > x1 && a1 > x && b > y1 && b1 > y){
         return true;
       }
       if(a > x2 && a2 > x && b > y2 && b2 > y){
         return true;
       }
-      if(y < 0 || b > CANVAS_HEIGHT){
+      if(y < 0 || b > this.height){
         return true
       }
     } //end of for loop
