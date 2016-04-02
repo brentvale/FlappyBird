@@ -41,7 +41,8 @@ Game.prototype = {
       clearInterval(this.playInterval);
       var that = this;
       
-      this.gameRecord.popUpModal(this.level.score);
+      this.gameRecord.score = this.level.score;
+      this.gameRecord.popUpModal();
       
       // setTimeout(function(){
 //         var c = that.ctx.canvas.getContext('2d');
