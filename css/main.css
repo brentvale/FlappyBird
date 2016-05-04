@@ -2,6 +2,21 @@ html, body, canvas {
   padding: 0px;
   margin: 0px;
 }
+h1{
+  position:absolute;
+  top:100px;
+  color:white;
+  text-align:center;
+  z-index:10;
+  max-width:450px;
+  left:0;
+  right:0;
+  margin-left:auto;
+  margin-right:auto;
+}
+h1 a{
+  color: yellow;
+}
 #introText{
   position: absolute;
   left: 0;

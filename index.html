@@ -17,7 +17,9 @@
     
     <canvas id="bird-game" width="900" height="480"></canvas>
     
-    <div id="introText">Tap Mouse To Fly</div>
+    <!-- <div id="introText">Tap Mouse To Fly</div> -->
+    
+    <h1>Flappy Dragon has moved to <a href="http://flappydragon.herokuapp.com/" alt="Flappy Dragon Game Link">this new location</a>.  Thanks for checking&nbsp;it&nbsp;out!</h1>
     
     <script>
       document.body.style.overflow = "hidden";
@@ -37,16 +39,16 @@
       var game = new Game(c, windowHeight, windowWidth);
       game.prepare();
       
-      var eventListenerToAdd = (mobileAndTabletcheck()) ? "touchstart" : "mousedown";
-      window.addEventListener(eventListenerToAdd, function init(event) {
-        window.removeEventListener(eventListenerToAdd, init, false);
-        gamePlay();
-      }, false);
-      
-      function gamePlay() {
-        game.play();
-        document.getElementById('introText').innerHTML = '';
-      }
+      // var eventListenerToAdd = (mobileAndTabletcheck()) ? "touchstart" : "mousedown";
+//       window.addEventListener(eventListenerToAdd, function init(event) {
+//         window.removeEventListener(eventListenerToAdd, init, false);
+//         gamePlay();
+//       }, false);
+//
+//       function gamePlay() {
+//         game.play();
+//         document.getElementById('introText').innerHTML = '';
+//       }
       
     </script>
   </body>
